@@ -9,6 +9,7 @@
         textarea { width: 100%; background: #f4f4f4; padding: 15px; border-radius: 8px; }
         img { width: 100%; border-radius: 8px; margin-top: 20px; }
         button { background: #2c3e50; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-pdf { display: inline-block; margin-top: 15px; background: #c0392b; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-family: Arial, sans-serif; }
     </style>
 </head>
 <body>
@@ -23,6 +24,8 @@
     {% if analyse %}
         <h2>📊 Analyse :</h2>
         <textarea rows="15" readonly>{{ analyse }}</textarea>
+        <br>
+        <a href="/telecharger-pdf" class="btn-pdf">⬇ Télécharger le rapport PDF</a>
     {% endif %}
 
     {% if graphique %}

@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, session, send_file
 import anthropic
 import pandas as pd
 import matplotlib
@@ -7,8 +7,15 @@ import matplotlib.pyplot as plt
 import io
 import base64
 import os
+import tempfile
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -19,7 +26,6 @@ def index():
         fichier = request.files["csv"]
         df = pd.read_csv(fichier, encoding='utf-8', on_bad_lines='skip', engine='python')
         df = df.head(200)
-        
 
         # ── Analyse par Claude ──────────────────────────────────────
         client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
@@ -43,7 +49,7 @@ def index():
         )
         analyse = message.content[0].text
 
-       # ── Graphique ───────────────────────────────────────────────
+        # ── Graphique ───────────────────────────────────────────────
         fig, axes = plt.subplots(1, 2, figsize=(14, 5))
         colonnes_numeriques = df.select_dtypes(include="number").columns.tolist()
 
@@ -71,16 +77,94 @@ def index():
                 axes[1].set_ylabel("Nombre de films")
             else:
                 axes[1].axis("off")
-        
+
         plt.tight_layout()
 
+        # Sauvegarde dans un fichier temp pour la génération PDF
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+        plt.savefig(tmp.name, format="png", dpi=100)
+        tmp.close()
+
+        # Encodage base64 pour l'affichage HTML
         buf = io.BytesIO()
         plt.savefig(buf, format="png")
         buf.seek(0)
         graphique = base64.b64encode(buf.read()).decode("utf-8")
         plt.close()
 
+        # Stockage en session pour le téléchargement PDF
+        session['analyse'] = analyse
+        session['graphique_path'] = tmp.name
+
     return render_template("index.html", analyse=analyse, graphique=graphique)
+
+
+@app.route("/telecharger-pdf")
+def telecharger_pdf():
+    analyse = session.get('analyse')
+    graphique_path = session.get('graphique_path')
+
+    if not analyse:
+        return "Aucune analyse disponible. Veuillez d'abord analyser un fichier CSV.", 400
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=2 * cm,
+        leftMargin=2 * cm,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    body_style = ParagraphStyle(
+        'body',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=14,
+        spaceAfter=4,
+    )
+
+    elements = []
+    elements.append(Paragraph("Rapport d'analyse marketing", styles['Title']))
+    elements.append(Spacer(1, 0.5 * cm))
+    elements.append(Paragraph("Analyse par Claude IA", styles['Heading2']))
+    elements.append(Spacer(1, 0.3 * cm))
+
+    for line in analyse.split('\n'):
+        line = line.strip()
+        if line:
+            line = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            elements.append(Paragraph(line, body_style))
+        else:
+            elements.append(Spacer(1, 0.2 * cm))
+
+    if graphique_path and os.path.exists(graphique_path):
+        elements.append(Spacer(1, 0.5 * cm))
+        elements.append(Paragraph("Graphiques", styles['Heading2']))
+        elements.append(Spacer(1, 0.3 * cm))
+        img_width = 17 * cm
+        elements.append(RLImage(graphique_path, width=img_width, height=img_width * 5 / 14))
+
+    doc.build(elements)
+
+    # Nettoyage du fichier temp après intégration dans le PDF
+    if graphique_path and os.path.exists(graphique_path):
+        try:
+            os.unlink(graphique_path)
+            session.pop('graphique_path', None)
+        except OSError:
+            pass
+
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="rapport_marketing.pdf",
+        mimetype="application/pdf",
+    )
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
