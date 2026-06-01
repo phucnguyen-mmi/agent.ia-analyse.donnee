@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion - Agent IA Marketing</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 400px; margin: 100px auto; padding: 0 20px; }
+        h1 { color: #2c3e50; text-align: center; }
+        input[type="password"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background: #2c3e50; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; }
+        .error { color: #c0392b; text-align: center; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🔒 Connexion</h1>
+    <form method="POST">
+        <input type="password" name="password" placeholder="Mot de passe" autofocus required>
+        <button type="submit">Se connecter</button>
+    </form>
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+</body>
+</html>

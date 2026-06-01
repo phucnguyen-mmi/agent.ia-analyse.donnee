@@ -1,4 +1,5 @@
-from flask import Flask, request, render_template, session, send_file
+from flask import Flask, request, render_template, session, send_file, redirect, url_for
+from functools import wraps
 import anthropic
 import pandas as pd
 import matplotlib
@@ -17,7 +18,32 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RL
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('authenticated'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        if password == os.environ.get("APP_PASSWORD", ""):
+            session['authenticated'] = True
+            return redirect(url_for('index'))
+        error = "Mot de passe incorrect."
+    return render_template("login.html", error=error)
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def index():
     analyse = None
     graphique = None
@@ -101,6 +127,7 @@ def index():
 
 
 @app.route("/telecharger-pdf")
+@login_required
 def telecharger_pdf():
     analyse = session.get('analyse')
     graphique_path = session.get('graphique_path')
