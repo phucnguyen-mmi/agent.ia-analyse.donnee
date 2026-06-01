@@ -32,6 +32,7 @@ def index():
 
         prompt = f"""
         Tu es un expert en analyse de données marketing.
+        Réponds en texte brut uniquement, sans markdown, sans symboles # ni *.
         Voici les données :
 
         {df.to_string()}
