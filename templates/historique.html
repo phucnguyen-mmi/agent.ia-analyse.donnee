@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Historique - Agent IA Marketing</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        h1 { color: #2c3e50; }
+        .filters { margin: 20px 0; display: flex; gap: 10px; align-items: center; }
+        input[type="date"] { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+        button { background: #2c3e50; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; }
+        a.btn-reset { background: #95a5a6; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #2c3e50; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        tr:hover { background: #f9f9f9; }
+        a.btn-voir { background: #2980b9; color: white; padding: 5px 12px; border-radius: 4px; text-decoration: none; font-size: 13px; }
+        .empty { text-align: center; color: #999; padding: 40px; }
+        a.btn-back { display: inline-block; margin-bottom: 20px; color: #2c3e50; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <a href="/" class="btn-back">← Retour</a>
+    <h1>📋 Historique des analyses</h1>
+
+    <form class="filters" method="GET">
+        <input type="date" name="date" value="{{ date_filtre }}">
+        <button type="submit">Filtrer</button>
+        {% if date_filtre %}
+            <a href="/historique" class="btn-reset">Réinitialiser</a>
+        {% endif %}
+    </form>
+
+    {% if analyses %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fichier</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in analyses %}
+                <tr>
+                    <td>{{ a.id }}</td>
+                    <td>{{ a.nom_fichier }}</td>
+                    <td>{{ a.date.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td><a href="/historique/{{ a.id }}" class="btn-voir">Voir</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="empty">Aucune analyse trouvée.</p>
+    {% endif %}
+</body>
+</html>

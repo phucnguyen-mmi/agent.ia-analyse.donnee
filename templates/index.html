@@ -11,11 +11,13 @@
         button { background: #2c3e50; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; }
         .btn-pdf { display: inline-block; margin-top: 15px; background: #c0392b; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-family: Arial, sans-serif; }
         .btn-logout { float: right; background: none; color: #999; border: 1px solid #ccc; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn-historique { display: inline-block; margin-top: 20px; color: #2c3e50; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
     <a href="/logout" class="btn-logout">Déconnexion</a>
     <h1>🤖 Agent IA - Analyse Marketing</h1>
+    <a href="/historique" class="btn-historique">📋 Voir l'historique des analyses</a>
     <form method="POST" enctype="multipart/form-data">
         <p>Upload ton fichier CSV :</p>
         <input type="file" name="csv" accept=".csv" required>

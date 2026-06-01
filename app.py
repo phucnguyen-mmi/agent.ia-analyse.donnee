@@ -1,5 +1,7 @@
 from flask import Flask, request, render_template, session, send_file, redirect, url_for
 from functools import wraps
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 import anthropic
 import pandas as pd
 import matplotlib
@@ -17,6 +19,24 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RL
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///analyses.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+
+class AnalyseRecord(db.Model):
+    __tablename__ = 'analyse'
+    id = db.Column(db.Integer, primary_key=True)
+    nom_fichier = db.Column(db.String(255))
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+    texte = db.Column(db.Text)
+    graphique = db.Column(db.Text)
+    csv_contenu = db.Column(db.Text)
+
+
+with app.app_context():
+    db.create_all()
+
 
 def login_required(f):
     @wraps(f)
@@ -25,6 +45,7 @@ def login_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -37,10 +58,12 @@ def login():
         error = "Mot de passe incorrect."
     return render_template("login.html", error=error)
 
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
 
 @app.route("/", methods=["GET", "POST"])
 @login_required
@@ -50,6 +73,7 @@ def index():
 
     if request.method == "POST":
         fichier = request.files["csv"]
+        nom_fichier = fichier.filename
         df = pd.read_csv(fichier, encoding='utf-8', on_bad_lines='skip', engine='python')
         df = df.head(200)
 
@@ -112,7 +136,7 @@ def index():
         plt.savefig(tmp.name, format="png", dpi=100)
         tmp.close()
 
-        # Encodage base64 pour l'affichage HTML
+        # Encodage base64 pour l'affichage HTML et la base de données
         buf = io.BytesIO()
         plt.savefig(buf, format="png")
         buf.seek(0)
@@ -122,6 +146,16 @@ def index():
         # Stockage en session pour le téléchargement PDF
         session['analyse'] = analyse
         session['graphique_path'] = tmp.name
+
+        # Sauvegarde en base de données
+        record = AnalyseRecord(
+            nom_fichier=nom_fichier,
+            texte=analyse,
+            graphique=graphique,
+            csv_contenu=df.to_csv(index=False),
+        )
+        db.session.add(record)
+        db.session.commit()
 
     return render_template("index.html", analyse=analyse, graphique=graphique)
 
@@ -177,7 +211,6 @@ def telecharger_pdf():
 
     doc.build(elements)
 
-    # Nettoyage du fichier temp après intégration dans le PDF
     if graphique_path and os.path.exists(graphique_path):
         try:
             os.unlink(graphique_path)
@@ -192,6 +225,28 @@ def telecharger_pdf():
         download_name="rapport_marketing.pdf",
         mimetype="application/pdf",
     )
+
+
+@app.route("/historique")
+@login_required
+def historique():
+    date_filtre = request.args.get('date', '')
+    query = AnalyseRecord.query.order_by(AnalyseRecord.date.desc())
+    if date_filtre:
+        try:
+            d = datetime.strptime(date_filtre, '%Y-%m-%d').date()
+            query = query.filter(db.func.date(AnalyseRecord.date) == d)
+        except ValueError:
+            pass
+    analyses = query.all()
+    return render_template("historique.html", analyses=analyses, date_filtre=date_filtre)
+
+
+@app.route("/historique/<int:id>")
+@login_required
+def voir_analyse(id):
+    a = AnalyseRecord.query.get_or_404(id)
+    return render_template("voir_analyse.html", analyse=a)
 
 
 if __name__ == "__main__":

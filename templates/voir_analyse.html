@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ analyse.nom_fichier }} - Agent IA Marketing</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        h1 { color: #2c3e50; word-break: break-all; }
+        h2 { color: #34495e; margin-top: 30px; }
+        .meta { color: #777; font-size: 14px; margin-bottom: 20px; }
+        textarea { width: 100%; background: #f4f4f4; padding: 15px; border-radius: 8px; border: none; box-sizing: border-box; }
+        img { width: 100%; border-radius: 8px; margin-top: 10px; }
+        a.btn-back { display: inline-block; margin-bottom: 20px; color: #2c3e50; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <a href="/historique" class="btn-back">← Historique</a>
+    <h1>{{ analyse.nom_fichier }}</h1>
+    <p class="meta">Analysé le {{ analyse.date.strftime('%d/%m/%Y à %H:%M') }}</p>
+
+    <h2>📊 Analyse</h2>
+    <textarea rows="15" readonly>{{ analyse.texte }}</textarea>
+
+    {% if analyse.graphique %}
+        <h2>📈 Graphique</h2>
+        <img src="data:image/png;base64,{{ analyse.graphique }}" alt="Graphique">
+    {% endif %}
+</body>
+</html>
