@@ -43,39 +43,35 @@ def index():
         )
         analyse = message.content[0].text
 
-        # ── Graphique ───────────────────────────────────────────────
+       # ── Graphique ───────────────────────────────────────────────
         fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
         colonnes_numeriques = df.select_dtypes(include="number").columns.tolist()
 
         if len(colonnes_numeriques) >= 1:
-            # Graphique 1 : Top 10 des valeurs de la première colonne numérique
             col_principale = colonnes_numeriques[0]
             top10 = df.nlargest(10, col_principale)
-           
-        # Cherche une colonne texte pertinente (Title, mois, nom...)
-        if "Title" in df.columns:
-            label_col = "Title"
-        elif "title" in df.columns:
-            label_col = "title"
-        else:
-            label_col = df.select_dtypes(include="object").columns[0]
-    
+
+            if "Title" in df.columns:
+                label_col = "Title"
+            elif "title" in df.columns:
+                label_col = "title"
+            else:
+                label_col = df.select_dtypes(include="object").columns[0]
+
             axes[0].barh(top10[label_col].astype(str), top10[col_principale], color="steelblue")
             axes[0].set_title(f"Top 10 par {col_principale}")
             axes[0].set_xlabel(col_principale)
             axes[0].invert_yaxis()
 
-            # Graphique 2 : Distribution de la 2ème colonne numérique si elle existe
-        if len(colonnes_numeriques) >= 2:
-            col2 = colonnes_numeriques[1]
-            axes[1].hist(df[col2].dropna(), bins=20, color="coral", edgecolor="white")
-            axes[1].set_title(f"Distribution de {col2}")
-            axes[1].set_xlabel(col2)
-            axes[1].set_ylabel("Nombre de films")
-        else:
-            axes[1].axis("off")
-
+            if len(colonnes_numeriques) >= 2:
+                col2 = colonnes_numeriques[1]
+                axes[1].hist(df[col2].dropna(), bins=20, color="coral", edgecolor="white")
+                axes[1].set_title(f"Distribution de {col2}")
+                axes[1].set_xlabel(col2)
+                axes[1].set_ylabel("Nombre de films")
+            else:
+                axes[1].axis("off")
+        
         plt.tight_layout()
 
         buf = io.BytesIO()
