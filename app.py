@@ -31,7 +31,7 @@ def login():
     error = None
     if request.method == "POST":
         password = request.form.get("password", "")
-        if password == os.environ.get("APP_PASSWORD", ""):
+        if password.strip() == os.environ.get("APP_PASSWORD", "").strip():
             session['authenticated'] = True
             return redirect(url_for('index'))
         error = "Mot de passe incorrect."
