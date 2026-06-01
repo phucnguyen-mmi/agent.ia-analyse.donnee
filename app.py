@@ -45,10 +45,17 @@ def index():
 
         # ── Graphique ───────────────────────────────────────────────
         fig, ax = plt.subplots(figsize=(10, 5))
-        colonnes_numeriques = df.select_dtypes(include="number").columns
-        if len(colonnes_numeriques) >= 2:
-            df.plot(x=df.columns[0], y=list(colonnes_numeriques[:2]), ax=ax)
-        plt.tight_layout()
+        colonnes_numeriques = df.select_dtypes(include="number").columns.tolist()
+
+        if len(colonnes_numeriques) >= 1:
+            df[colonnes_numeriques[:3]].head(50).plot(ax=ax)
+            ax.set_title("Aperçu des données numériques")
+            ax.set_xlabel("Index")
+        else:
+            ax.text(0.5, 0.5, "Pas de données numériques à afficher",
+            ha='center', va='center', transform=ax.transAxes)
+
+            plt.tight_layout()
 
         buf = io.BytesIO()
         plt.savefig(buf, format="png")
