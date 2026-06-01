@@ -18,7 +18,8 @@ def index():
     if request.method == "POST":
         fichier = request.files["csv"]
         df = pd.read_csv(fichier, encoding='utf-8', on_bad_lines='skip', engine='python')
-        df = df.head(500)
+        df = df.head(200)
+        
 
         # ── Analyse par Claude ──────────────────────────────────────
         client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
