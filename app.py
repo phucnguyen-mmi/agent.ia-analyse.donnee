@@ -52,7 +52,14 @@ def index():
             # Graphique 1 : Top 10 des valeurs de la première colonne numérique
             col_principale = colonnes_numeriques[0]
             top10 = df.nlargest(10, col_principale)
-            label_col = df.columns[0]  # ex: Title, mois...
+           
+        # Cherche une colonne texte pertinente (Title, mois, nom...)
+        if "Title" in df.columns:
+            label_col = "Title"
+        elif "title" in df.columns:
+            label_col = "title"
+        else:
+            label_col = df.select_dtypes(include="object").columns[0]
     
             axes[0].barh(top10[label_col].astype(str), top10[col_principale], color="steelblue")
             axes[0].set_title(f"Top 10 par {col_principale}")
