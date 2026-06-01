@@ -2,4 +2,4 @@ anthropic
 pandas
 matplotlib
 flask
-waitress
+gunicorn
