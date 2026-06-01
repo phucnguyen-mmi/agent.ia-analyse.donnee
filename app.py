@@ -44,18 +44,32 @@ def index():
         analyse = message.content[0].text
 
         # ── Graphique ───────────────────────────────────────────────
-        fig, ax = plt.subplots(figsize=(10, 5))
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
         colonnes_numeriques = df.select_dtypes(include="number").columns.tolist()
 
         if len(colonnes_numeriques) >= 1:
-            df[colonnes_numeriques[:3]].head(50).plot(ax=ax)
-            ax.set_title("Aperçu des données numériques")
-            ax.set_xlabel("Index")
-        else:
-            ax.text(0.5, 0.5, "Pas de données numériques à afficher",
-            ha='center', va='center', transform=ax.transAxes)
+            # Graphique 1 : Top 10 des valeurs de la première colonne numérique
+            col_principale = colonnes_numeriques[0]
+            top10 = df.nlargest(10, col_principale)
+            label_col = df.columns[0]  # ex: Title, mois...
+    
+            axes[0].barh(top10[label_col].astype(str), top10[col_principale], color="steelblue")
+            axes[0].set_title(f"Top 10 par {col_principale}")
+            axes[0].set_xlabel(col_principale)
+            axes[0].invert_yaxis()
 
-            plt.tight_layout()
+            # Graphique 2 : Distribution de la 2ème colonne numérique si elle existe
+        if len(colonnes_numeriques) >= 2:
+            col2 = colonnes_numeriques[1]
+            axes[1].hist(df[col2].dropna(), bins=20, color="coral", edgecolor="white")
+            axes[1].set_title(f"Distribution de {col2}")
+            axes[1].set_xlabel(col2)
+            axes[1].set_ylabel("Nombre de films")
+        else:
+            axes[1].axis("off")
+
+        plt.tight_layout()
 
         buf = io.BytesIO()
         plt.savefig(buf, format="png")
